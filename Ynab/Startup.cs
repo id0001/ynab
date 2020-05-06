@@ -1,14 +1,30 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using Ynab.Authentication;
+using Ynab.Services;
 
 namespace Ynab
 {
 	public class Startup
 	{
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
+
+		private IConfiguration Configuration { get; }
+
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddControllers();
@@ -17,24 +33,32 @@ namespace Ynab
 			{
 				options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 				options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-				options.DefaultChallengeScheme = "Ynab";
+				options.DefaultChallengeScheme = YnabDefaults.AuthenticationScheme;
 			})
 			.AddCookie()
-			.AddOAuth("Ynab", options =>
+			.AddYnab(options =>
 			{
-				options.ClientId = "84f6a7bc0f601375c0c6dfabf8e1c48c17e3515654528403fbc733122cda981b";
-				options.ClientSecret = "99da34a09dc855c24f003e04e76298ae8b4b149b2baed8db2c00f6edfe02023b";
-				options.CallbackPath = new PathString("/signin-ynab");
+				options.ClientId = Configuration["ynab:clientid"];
+				options.ClientSecret = Configuration["ynab:clientsecret"];
+				options.Scope.Add("read-only");
+				options.SaveTokens = true;
 
-				options.AuthorizationEndpoint = "https://app.youneedabudget.com/oauth/authorize";
-				options.TokenEndpoint = "https://app.youneedabudget.com/oauth/token";
+				options.Events.OnRedirectToAuthorizationEndpoint = RedirectToAuthorizationEndpointAsync;
 			});
 
-			services.AddAuthorization(options =>
-			{
-			});
+			services.AddAuthorization();
 
+			services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
 			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
+
+			services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
+			{
+				var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+				var token = await contextAccessor.HttpContext.GetTokenAsync("access_token");
+
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				client.BaseAddress = new Uri(Configuration["ynab:apiendpoint"], UriKind.Absolute);
+			});
 		}
 
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -64,6 +88,21 @@ namespace Ynab
 				if (env.IsDevelopment())
 					spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
 			});
+		}
+
+		private static Task RedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
+		{
+			bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+			if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
+			{
+				context.Response.Headers["Location"] = context.RedirectUri;
+				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+				return Task.CompletedTask;
+			}
+
+			context.Response.Redirect(context.RedirectUri);
+			return Task.CompletedTask;
 		}
 	}
 }

@@ -9,7 +9,7 @@
     <aside class="sidenav-main white">
       <category-list></category-list>
     </aside>
-    <div class="main">
+    <div id="main-content" class="main">
       <category-burndown></category-burndown>
     </div>
   </div>

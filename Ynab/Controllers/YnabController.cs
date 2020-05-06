@@ -1,30 +1,46 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Ynab;
+using Ynab.Dto;
+using Ynab.Services;
 
 namespace OsrsWeb.Vue.Controllers
 {
 	[ApiController]
 	[Route("api/{controller}")]
-	//[Authorize]
+	[Authorize]
 	public class YnabController : ControllerBase
 	{
-		public YnabController()
+		private readonly IYnabService _ynabService;
+
+		public YnabController(IYnabService ynabService)
 		{
+			_ynabService = ynabService;
 		}
 
 		[Route("categories")]
-		public IActionResult GetCategories()
+		public async Task<IActionResult> GetCategoriesAsync(string budgetId)
 		{
-			//if (!User.Identity.IsAuthenticated)
-			//{
-			//	return Challenge();
-			//}
+			return CreateApiResponse(await _ynabService.GetCategoriesAsync(budgetId));
+		}
 
-			return Ok(new string[] { "Aap", "Noot", "Mies" });
+		[Route("budgets")]
+		public async Task<IActionResult> GetBudgetsAsync()
+		{
+			return CreateApiResponse(await _ynabService.GetBudgetsAsync());
+		}
+
+		private IActionResult CreateApiResponse<T>(YnabResponse<T> response)
+		{
+			if (response.Success)
+				return StatusCode(response.StatusCode, response.Value);
+
+			return StatusCode(response.StatusCode, response.Error);
 		}
 	}
 }

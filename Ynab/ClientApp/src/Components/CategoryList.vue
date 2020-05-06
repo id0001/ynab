@@ -1,7 +1,7 @@
 <template>
   <div>
     <ul>
-      <li v-for="cat in categories" :key="cat">{{ cat }}</li>
+      <li v-for="cat in categories" :key="cat.id">{{ cat.name }}</li>
     </ul>
   </div>
 </template>
@@ -24,7 +24,33 @@ export default {
   },
   methods: {
     loadCategories() {
-      Api.getCategories().then(res => (this.categories = res));
+      Api.budgets()
+        .then(budgets => {
+          if (budgets.length > 0) {
+            let b = budgets[0];
+            return Api.categories(b.id);
+          }
+        })
+        .then(res => {
+          console.log(res);
+          let cats = [];
+          for (let group of res) {
+            if (group.hidden || group.deleted) continue;
+
+            cats.push({ id: group.id, name: group.name, isGroup: true });
+            for (let category of group.categories) {
+              if (category.hidden) continue;
+
+              cats.push({
+                id: category.id,
+                name: category.name,
+                isGroup: false
+              });
+            }
+          }
+
+          this.categories = cats;
+        });
     }
   }
 };
