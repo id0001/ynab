@@ -1,5 +1,3 @@
-import toastr from 'toastr';
-
 var BASE_URL = 'http://localhost:5000';
 
 const ensureAuthorizedResponse = (response) => {
@@ -11,7 +9,7 @@ const ensureAuthorizedResponse = (response) => {
 const isSuccessResponse = (response) => response.status >= 200 && response.status < 300;
 
 const handleErrorResponse = (json, returnValue = null) => {
-	toastr.error(json.detail, json.name);
+	//toastr.error(json.detail, json.name);
 	return returnValue;
 };
 
@@ -25,7 +23,9 @@ const handleResponse = (response, defaultReturnValue = null) => {
 
 const get = (url) => fetch(url);
 
-function post(url, data) {}
+//=======================================
+// Exports
+//=======================================
 
 export const budgets = () => get(BASE_URL + '/api/ynab/budgets').then((r) => handleResponse(r, []));
 

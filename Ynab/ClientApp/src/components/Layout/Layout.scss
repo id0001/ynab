@@ -1,0 +1,17 @@
+@import '../../styles/app.scss';
+
+.root {
+	height: 100%;
+	background-color: color('grey', 'lighten-3');
+
+	.wrapper {
+		display: flex;
+		flex-direction: column;
+		margin: 0;
+		padding: 0;
+	}
+
+	.content {
+		flex-grow: 1;
+	}
+}

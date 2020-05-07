@@ -1,0 +1,45 @@
+@import '../../styles/app.scss';
+
+.app-budgetselector {
+	button {
+		background: none;
+		border: none;
+		outline: none;
+		@include loweredBorder(15px);
+		margin: 5px;
+		font-size: 16px;
+		font-weight: bold;
+		height: 50px;
+		width: 200px;
+		text-align: left;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		i {
+			@include raisedBorder(100px);
+			float: left;
+			width: 24px;
+			height: 24px;
+			vertical-align: middle;
+			text-align: center;
+		}
+
+		span {
+			height: 24px;
+			line-height: 24px;
+			padding-left: 8px;
+		}
+
+		&:hover {
+			background: none;
+			border: none;
+			outline: none;
+		}
+
+		&:focus {
+			background: none;
+			border: none;
+			outline: none;
+		}
+	}
+}
