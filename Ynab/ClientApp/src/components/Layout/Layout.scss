@@ -1,17 +1,21 @@
 @import '../../styles/app.scss';
 
 .root {
-	height: 100%;
 	background-color: color('grey', 'lighten-3');
+	display: flex;
+	flex-direction: column;
+	width: 100vw;
+	height: 100vh;
 
 	.wrapper {
+		flex-grow: 1;
+		width: 100%;
 		display: flex;
-		flex-direction: column;
-		margin: 0;
-		padding: 0;
+		flex-direction: row;
 	}
 
 	.content {
 		flex-grow: 1;
+		position: relative;
 	}
 }

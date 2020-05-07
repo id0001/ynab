@@ -47,11 +47,7 @@ export default {
   methods: {
     loadItems() {
       Api.budgets().then(items => {
-        this.items = [
-          { id: 1, name: "awooww wofwoe few ewof we wewefwef" },
-          { id: 2, name: "test long 2" },
-          { id: 2, name: "a" }
-        ];
+        this.items = items;
         this.isLoading = false;
       });
     },

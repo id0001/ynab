@@ -5,11 +5,8 @@ html {
 
 html,
 body {
-	height: 100vh;
+	min-height: 100vh;
+	min-width: 100vw;
 	font-family: "Roboto", sans-serif;
 	overflow: auto;
-}
-
-body {
-	position: relative;
 }
