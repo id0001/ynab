@@ -1,11 +1,12 @@
 @import '../../styles/app.scss';
 
 .app-navbar {
-	min-height: 60px;
-	height: 60px;
-	background: color('teal', 'lighten-3');
+	background: $navbar-color;
 	border-bottom: 1px solid $border-color;
-
+	grid-area: header;
+	display: grid;
+	grid-template-columns: 260px min-content auto min-content;
+	grid-template-areas: "logo left . right";
 	a {
 		display: block;
 		height: 60px;
@@ -24,8 +25,8 @@
 	}
 
 	> .logo {
+		grid-area: logo;
 		width: $sidebar-width;
-		float: left;
 	}
 
 	ul {
@@ -33,7 +34,7 @@
 		padding: 0;
 
 		&.left {
-			float: left;
+			grid-area: left;
 
 			> li {
 				float: left;
@@ -41,7 +42,13 @@
 		}
 
 		&.right {
-			float: right;
+			grid-area: right;
+			@for $i from 1 through 8 {
+				li:first-child:nth-last-child(#{$i}),
+				li:first-child-nth-last-child(#{$i}) ~ li {
+					width: #{120px * $i};
+				}
+			}
 
 			> li {
 				float: right;

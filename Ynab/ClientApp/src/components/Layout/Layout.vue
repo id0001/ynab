@@ -1,10 +1,8 @@
 <template>
   <div class="root">
     <Navbar />
-    <div class="wrapper">
-      <Sidebar />
-      <div class="content">Test</div>
-    </div>
+    <Sidebar />
+    <div class="content">Test</div>
   </div>
 </template>
 
