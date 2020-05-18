@@ -1,17 +1,21 @@
 <template>
-  <div class="root">
+  <div>
     <Navbar />
-    <Sidebar />
-    <div class="content">Test</div>
+    <Sidenav />
+    <Content />
   </div>
 </template>
 
 <script>
-import { Navbar, Sidebar } from "@/components";
+import { Navbar, Sidenav, Content } from "@/components";
 
 export default {
   name: "Layout",
-  components: { Navbar, Sidebar }
+  components: {
+    Navbar,
+    Sidenav,
+    Content
+  }
 };
 </script>
 

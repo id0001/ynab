@@ -1,32 +1,24 @@
 <template>
-  <div class="app-navbar">
-    <a href="#" class="logo">YNAB</a>
-    <ul class="left">
-      <li>
-        <BudgetSelector />
-      </li>
-    </ul>
-    <ul class="right">
-      <li>
-        <a class="active waves-effect waves-light" href="#">Login</a>
-      </li>
-      <li>
-        <a class="waves-effect waves-light" href="#">Test</a>
-      </li>
-      <li>
-        <a class="waves-effect waves-light" href="#">Test32</a>
-      </li>
-      <li>
-        <a class="waves-effect waves-light" href="#">Test3</a>
-      </li>
-    </ul>
-  </div>
+  <nav>
+    <div class="nav-wrapper">
+      <a href="#" class="brand-logo">YNAB</a>
+      <a href="#" data-target="app-sidenav" class="sidenav-trigger">
+        <i class="material-icons">menu</i>
+      </a>
+      <ul class="right hide-on-med-and-down">
+        <li>
+          <BudgetSelector />
+        </li>
+        <li>
+          <a href="/Login">Login</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 </template>
 
 <script>
-import M from "materialize-css";
-// import { BudgetSelector } from "@/components";
-import BudgetSelector from "@/components/BudgetSelector/BudgetSelector.vue";
+import { BudgetSelector } from "@/components";
 
 export default {
   name: "Navbar",
@@ -34,4 +26,4 @@ export default {
 };
 </script>
 
-<style lang="scss" src="./Navbar.scss"/>
+<style lang="scss" src="./Navbar.scss" />

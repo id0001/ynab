@@ -1,29 +1,30 @@
 <template>
-  <div class="app-budgetselector">
-    <button
-      :disabled="isLoading"
-      ref="dropdownButton"
-      class="waves-effect waves-light"
-      data-target="budgets"
-    >
-      <i v-if="stateClosed" class="material-icons">keyboard_arrow_down</i>
-      <i v-else class="material-icons">keyboard_arrow_up</i>
-      <span>{{ buttonContent }}</span>
-    </button>
-    <ul id="budgets" class="dropdown-content">
-      <li v-for="item in items" :key="item.id">
+  <a
+    :disabled="loading"
+    ref="dropdown"
+    class="app-budget-selector waves-effect waves-light"
+    href="#!"
+    :data-target="dataTargetId"
+  >
+    <i v-if="isDropDownClosed" class="material-icons">keyboard_arrow_down</i>
+    <i v-else class="material-icons">keyboard_arrow_up</i>
+    <span>{{ displayText }}</span>
+    <ul :id="dataTargetId" class="dropdown-content">
+      <li v-for="item in budgets" :key="item.id">
         <a @click="selectBudget(item)" href="#!">{{ item.name }}</a>
       </li>
     </ul>
-  </div>
+  </a>
 </template>
-
+    
 <script>
-import M from "materialize-css";
 import * as Api from "@/services/YnabService.js";
+import M from "materialize-css";
+import Uuid from "@/mixins/Uuid";
 
 export default {
   name: "BudgetSelector",
+  mixins: [Uuid],
   props: {
     placeholderText: {
       type: String,
@@ -34,37 +35,38 @@ export default {
   },
   data() {
     return {
-      isLoading: true,
-      stateClosed: true,
-      items: [],
-      buttonContent: this.placeholderText
+      loading: true,
+      isDropDownClosed: true,
+      displayText: this.placeholderText,
+      budgets: [],
+      dataTargetId: "data-target-" + this.$uuid
     };
   },
   mounted() {
-    this.initDropdown();
-    this.loadItems();
+    this.initializeDropdown();
+    this.loadBudgets();
   },
   methods: {
-    loadItems() {
-      Api.budgets().then(items => {
-        this.items = items;
-        this.isLoading = false;
-      });
-    },
-    initDropdown() {
-      let self = this;
-      M.Dropdown.init(this.$refs.dropdownButton, {
+    initializeDropdown() {
+      M.Dropdown.init(this.$refs.dropdown, {
         coverTrigger: false,
         onOpenStart: () => {
-          this.stateClosed = false;
+          this.isDropDownClosed = false;
         },
         onCloseStart: () => {
-          this.stateClosed = true;
+          this.isDropDownClosed = true;
         }
       });
     },
+    loadBudgets() {
+      Api.budgets().then(items => {
+        this.budgets = items;
+        this.loading = false;
+        console.log(items);
+      });
+    },
     selectBudget(budget) {
-      this.buttonContent = budget.name;
+      this.displayText = budget.name;
       this.$emit("budget-selected", budget);
     }
   }

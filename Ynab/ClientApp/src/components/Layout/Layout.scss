@@ -1,16 +1,1 @@
 @import '../../styles/app.scss';
-
-.root {
-	background-color: color('grey', 'lighten-3');
-
-	display: grid;
-	grid-template-rows: 60px auto;
-	grid-template-columns: 260px auto;
-	grid-template-areas: "header header" "sidenav content";
-
-	height: 100%;
-
-	.content {
-		grid-area: content;
-	}
-}

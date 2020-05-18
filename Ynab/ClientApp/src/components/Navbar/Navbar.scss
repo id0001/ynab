@@ -1,58 +1,6 @@
 @import '../../styles/app.scss';
 
-.app-navbar {
-	background: $navbar-color;
-	border-bottom: 1px solid $border-color;
-	grid-area: header;
-	display: grid;
-	grid-template-columns: 260px min-content auto min-content;
-	grid-template-areas: "logo left . right";
-	a {
-		display: block;
-		height: 60px;
-		line-height: 60px;
-		display: block;
-		text-align: center;
-		font-weight: bold;
-		font-size: 16px;
-		color: black;
-		padding: 0px 5px;
-		min-width: 120px;
-
-		// &.active {
-		// 	background-color: rgba(0, 0, 0, 0.3);
-		// }
-	}
-
-	> .logo {
-		grid-area: logo;
-		width: $sidebar-width;
-	}
-
-	ul {
-		margin: 0;
-		padding: 0;
-
-		&.left {
-			grid-area: left;
-
-			> li {
-				float: left;
-			}
-		}
-
-		&.right {
-			grid-area: right;
-			@for $i from 1 through 8 {
-				li:first-child:nth-last-child(#{$i}),
-				li:first-child-nth-last-child(#{$i}) ~ li {
-					width: #{120px * $i};
-				}
-			}
-
-			> li {
-				float: right;
-			}
-		}
-	}
+.brand-logo {
+	width: 260px;
+	text-align: center;
 }
