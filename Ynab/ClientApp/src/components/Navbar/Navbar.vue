@@ -1,8 +1,8 @@
 <template>
-  <nav>
-    <div class="nav-wrapper">
-      <a href="#" class="brand-logo">YNAB</a>
-      <a href="#" data-target="app-sidenav" class="sidenav-trigger">
+  <nav class="app-navbar teal darken-2">
+    <div class="navbar-wrapper">
+      <a href="#!" class="brand-logo">{{ title }}</a>
+      <a href="#" class="sidenav-trigger" data-target="app-sidenav">
         <i class="material-icons">menu</i>
       </a>
       <ul class="right hide-on-med-and-down">
@@ -10,7 +10,7 @@
           <BudgetSelector />
         </li>
         <li>
-          <a href="/Login">Login</a>
+          <AuthButton />
         </li>
       </ul>
     </div>
@@ -18,11 +18,16 @@
 </template>
 
 <script>
-import { BudgetSelector } from "@/components";
+import { AuthButton, BudgetSelector } from "@/components";
 
 export default {
   name: "Navbar",
-  components: { BudgetSelector }
+  components: { AuthButton, BudgetSelector },
+  data() {
+    return {
+      title: "YNAB"
+    };
+  }
 };
 </script>
 

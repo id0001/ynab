@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -17,7 +18,7 @@ namespace Ynab.Authentication
 
 		public static AuthenticationBuilder AddYnab(this AuthenticationBuilder builder, string authenticationScheme, string displayName, Action<YnabOptions> configureOptions)
 		{
-			return builder.AddOAuth<YnabOptions, YnabHandler>(authenticationScheme, displayName, configureOptions);
+			return builder.AddOAuth<YnabOptions, OAuthHandler<YnabOptions>>(authenticationScheme, displayName, configureOptions);
 		}
 	}
 }

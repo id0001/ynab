@@ -1,6 +1,12 @@
-@import '../../styles/app.scss';
+nav.app-navbar {
+  @media only screen and (min-width: 768px) {
+    .brand-logo {
+      padding-left: 16px;
+    }
 
-.brand-logo {
-	width: 260px;
-	text-align: center;
+    .navbar-wrapper i {
+      height: 64px;
+      line-height: 64px;
+    }
+  }
 }

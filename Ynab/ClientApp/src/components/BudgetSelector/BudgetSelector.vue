@@ -1,69 +1,89 @@
 <template>
-  <a
-    :disabled="loading"
-    ref="dropdown"
-    class="app-budget-selector waves-effect waves-light"
-    href="#!"
-    :data-target="dataTargetId"
-  >
-    <i v-if="isDropDownClosed" class="material-icons">keyboard_arrow_down</i>
-    <i v-else class="material-icons">keyboard_arrow_up</i>
-    <span>{{ displayText }}</span>
-    <ul :id="dataTargetId" class="dropdown-content">
+  <a href="#!" ref="dropdown" class="app-budget-selector" :data-target="ids.budgetItems">
+    {{ displayText }}
+    <i v-if="dropdownOpen" class="material-icons right">arrow_drop_up</i>
+    <i v-else class="material-icons right">arrow_drop_down</i>
+    <ul :id="ids.budgetItems" class="dropdown-content">
+      <li disabled v-if="budgets.length <= 0">
+        <span>Loading...</span>
+      </li>
       <li v-for="item in budgets" :key="item.id">
-        <a @click="selectBudget(item)" href="#!">{{ item.name }}</a>
+        <a href="#!" @click="selectBudget(item)">{{ item.name }}</a>
       </li>
     </ul>
   </a>
 </template>
-    
+
 <script>
-import * as Api from "@/services/YnabService.js";
+import { Uuid } from "@/mixins";
 import M from "materialize-css";
-import Uuid from "@/mixins/Uuid";
+import Auth from "@/services/auth.service";
 
 export default {
   name: "BudgetSelector",
+  components: {},
   mixins: [Uuid],
-  props: {
-    placeholderText: {
-      type: String,
-      default() {
-        return "Select budget...";
-      }
-    }
-  },
   data() {
     return {
-      loading: true,
-      isDropDownClosed: true,
-      displayText: this.placeholderText,
+      auth: Auth,
+      dropdownOpen: false,
       budgets: [],
-      dataTargetId: "data-target-" + this.$uuid
+      displayText: "Select budget...",
+      ids: {
+        budgetItems: "data-target-" + this.$uuid
+      }
     };
   },
   mounted() {
-    this.initializeDropdown();
-    this.loadBudgets();
+    this.initDropdown();
+  },
+  watch: {
+    budgets() {}
   },
   methods: {
-    initializeDropdown() {
-      M.Dropdown.init(this.$refs.dropdown, {
+    initDropdown() {
+      const el = this.$refs.dropdown;
+      M.Dropdown.init(el, {
         coverTrigger: false,
         onOpenStart: () => {
-          this.isDropDownClosed = false;
+          this.dropdownOpen = true;
+          if (this.budgets.length === 0) {
+            this.loadBudgets();
+          }
         },
         onCloseStart: () => {
-          this.isDropDownClosed = true;
+          this.dropdownOpen = false;
         }
       });
     },
     loadBudgets() {
-      Api.budgets().then(items => {
-        this.budgets = items;
-        this.loading = false;
-        console.log(items);
-      });
+      const self = this;
+      setTimeout(() => {
+        self.budgets = [
+          {
+            id: 1,
+            name: "aap"
+          },
+          {
+            id: 2,
+            name: "noot"
+          },
+          {
+            id: 3,
+            name: "mies"
+          }
+        ];
+
+        this.updateDropdown();
+      }, 2000);
+    },
+    updateDropdown() {
+      var inst = M.Dropdown.getInstance(this.$refs.dropdown);
+      if (inst.isOpen) {
+        this.$nextTick(() => {
+          inst.recalculateDimensions();
+        });
+      }
     },
     selectBudget(budget) {
       this.displayText = budget.name;

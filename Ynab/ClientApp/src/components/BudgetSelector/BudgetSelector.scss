@@ -1,8 +1,11 @@
-@import '../../styles/app.scss';
+.app-budget-selector {
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
-nav .app-budget-selector {
-	display: inline-flex;
-	vertical-align: middle;
-	align-items: center;
-	width: 200px;
+  .app-sidenav & {
+  }
+
+  .app-navbar & {
+    width: 200px;
+  }
 }

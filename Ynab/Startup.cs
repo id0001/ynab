@@ -9,100 +9,128 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Ynab.Authentication;
+using Ynab.Extensions;
 using Ynab.Services;
 
 namespace Ynab
 {
-	public class Startup
-	{
-		public Startup(IConfiguration configuration)
-		{
-			Configuration = configuration;
-		}
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
 
-		private IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
-		public void ConfigureServices(IServiceCollection services)
-		{
-			services.AddControllers();
+        public void ConfigureServices(IServiceCollection services)
+        {
+            services.AddControllers();
 
-			services.AddAuthentication(options =>
-			{
-				options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-				options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-				options.DefaultChallengeScheme = YnabDefaults.AuthenticationScheme;
-			})
-			.AddCookie()
-			.AddYnab(options =>
-			{
-				options.ClientId = Configuration["ynab:clientid"];
-				options.ClientSecret = Configuration["ynab:clientsecret"];
-				options.Scope.Add("read-only");
-				options.SaveTokens = true;
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = YnabDefaults.AuthenticationScheme;
+            })
+            .AddCookie(options =>
+            {
+            })
+            .AddYnab(options =>
+            {
+                options.ClientId = Configuration["ynab:clientid"];
+                options.ClientSecret = Configuration["ynab:clientsecret"];
+                options.Scope.Add("read-only");
+                options.SaveTokens = true;
 
-				options.Events.OnRedirectToAuthorizationEndpoint = RedirectToAuthorizationEndpointAsync;
-			});
+                options.Events.OnRedirectToAuthorizationEndpoint = RedirectToAuthorizationEndpointAsync;
+                options.Events.OnCreatingTicket = async context =>
+                {
+                    var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-			services.AddAuthorization();
+                    var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
+                    response.EnsureSuccessStatusCode();
 
-			services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
+                    using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()))
+                    {
+                        var claims = new List<Claim>();
 
-			services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
-			{
-				var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-				var token = await contextAccessor.HttpContext.GetTokenAsync("access_token");
+                        if (payload.RootElement.TryGetProperty(new[] { "data", "user", "id" }, out var identifier))
+                        {
+                            claims.Add(new Claim(ClaimTypes.PrimarySid, identifier.GetString()));
+                        }
 
-				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-				client.BaseAddress = new Uri(Configuration["ynab:apiendpoint"], UriKind.Absolute);
-			});
-		}
+                        context.Identity.AddClaims(claims);
+                    }
+                };
+            });
 
-		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-		{
-			if (env.IsDevelopment())
-			{
-				app.UseDeveloperExceptionPage();
-			}
+            services.AddAuthorization();
 
-			app.UseStaticFiles();
-			app.UseSpaStaticFiles();
+            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
 
-			app.UseRouting();
+            services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
+            {
+                var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+                var token = await contextAccessor.HttpContext.GetTokenAsync("access_token");
 
-			app.UseAuthentication();
-			app.UseAuthorization();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                client.BaseAddress = new Uri(Configuration["ynab:apiendpoint"], UriKind.Absolute);
+            });
+        }
 
-			app.UseEndpoints(endpoints =>
-			{
-				endpoints.MapControllers();
-			});
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
 
-			app.UseSpa(spa =>
-			{
-				spa.Options.SourcePath = "ClientApp";
+            app.UseStaticFiles();
+            app.UseSpaStaticFiles();
 
-				if (env.IsDevelopment())
-					spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
-			});
-		}
+            app.UseRouting();
 
-		private static Task RedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
-		{
-			bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-			if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
-			{
-				context.Response.Headers["Location"] = context.RedirectUri;
-				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-				return Task.CompletedTask;
-			}
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
 
-			context.Response.Redirect(context.RedirectUri);
-			return Task.CompletedTask;
-		}
-	}
+            app.UseSpa(spa =>
+            {
+                spa.Options.SourcePath = "ClientApp";
+
+                if (env.IsDevelopment())
+                    spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
+            });
+        }
+
+        private static Task RedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
+        {
+            bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+
+            if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.Headers["Location"] = context.RedirectUri;
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        }
+    }
 }
