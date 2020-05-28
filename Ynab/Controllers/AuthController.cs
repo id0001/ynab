@@ -12,12 +12,14 @@ namespace Ynab.Controllers
     public class AuthController : ControllerBase
     {
         [Route("login")]
+        [HttpGet]
         public async Task LoginAsync(string returnUrl = "/")
         {
             await HttpContext.ChallengeAsync(YnabDefaults.AuthenticationScheme, new AuthenticationProperties { RedirectUri = returnUrl, IsPersistent = true, AllowRefresh = true });
         }
 
         [Route("logout")]
+        [HttpGet]
         [Authorize]
         public async Task LogoutAsync()
         {
@@ -29,6 +31,7 @@ namespace Ynab.Controllers
         }
 
         [Route("user")]
+        [HttpGet]
         public IActionResult GetUser()
         {
             if (!User.Identity.IsAuthenticated)

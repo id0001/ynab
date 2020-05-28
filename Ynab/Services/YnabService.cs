@@ -35,7 +35,6 @@ namespace Ynab.Services
 			if (apiResponse.Success)
 			{
 				var prop = apiResponse.ResultObject.GetProperty("data").GetProperty("budgets");
-				var tex = prop.GetRawText();
 				response.Value = JsonSerializer.Deserialize<List<Budget>>(prop.GetRawText(), _serializerOptions);
 			}
 			else
