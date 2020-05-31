@@ -1,13 +1,8 @@
 <template>
   <ul id="app-sidenav" class="app-sidenav sidenav">
     <li>
-      <div class="user-view">
-        <div class="background">
-          <img class="gray lighten-3" />
-        </div>
-        <a href="#">
-          <span class="name">{{ authStatus }}</span>
-        </a>
+      <div class="user-view teal darken-2">
+        <div class="background"></div>
       </div>
     </li>
     <li>

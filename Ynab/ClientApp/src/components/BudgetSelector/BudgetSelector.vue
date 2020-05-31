@@ -18,6 +18,8 @@
 import { Uuid } from "@/mixins";
 import M from "materialize-css";
 import Auth from "@/services/auth.service";
+import Api from "@/services/api.service";
+import Store from "@/services/store.service";
 
 export default {
   name: "BudgetSelector",
@@ -37,9 +39,6 @@ export default {
   mounted() {
     this.initDropdown();
   },
-  watch: {
-    budgets() {}
-  },
   methods: {
     initDropdown() {
       const el = this.$refs.dropdown;
@@ -57,25 +56,10 @@ export default {
       });
     },
     loadBudgets() {
-      const self = this;
-      setTimeout(() => {
-        self.budgets = [
-          {
-            id: 1,
-            name: "aap"
-          },
-          {
-            id: 2,
-            name: "noot"
-          },
-          {
-            id: 3,
-            name: "mies"
-          }
-        ];
-
+      Api.budgets().then(res => {
+        this.budgets = res;
         this.updateDropdown();
-      }, 2000);
+      });
     },
     updateDropdown() {
       var inst = M.Dropdown.getInstance(this.$refs.dropdown);
@@ -88,6 +72,7 @@ export default {
     selectBudget(budget) {
       this.displayText = budget.name;
       this.$emit("budget-selected", budget);
+      Store.selectedBudget = budget;
     }
   }
 };

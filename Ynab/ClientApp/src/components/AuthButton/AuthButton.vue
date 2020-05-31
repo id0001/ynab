@@ -15,11 +15,7 @@ export default {
     };
   },
   mounted() {},
-  methods: {
-    login() {
-      Auth.login();
-    }
-  },
+  methods: {},
   computed: {}
 };
 </script>

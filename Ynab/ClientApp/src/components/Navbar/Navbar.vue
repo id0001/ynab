@@ -9,6 +9,10 @@
         <li>
           <BudgetSelector />
         </li>
+        <li>&gt;</li>
+        <li>
+          <CategorySelector />
+        </li>
         <li>
           <AuthButton />
         </li>
@@ -18,11 +22,11 @@
 </template>
 
 <script>
-import { AuthButton, BudgetSelector } from "@/components";
+import { AuthButton, BudgetSelector, CategorySelector } from "@/components";
 
 export default {
   name: "Navbar",
-  components: { AuthButton, BudgetSelector },
+  components: { AuthButton, BudgetSelector, CategorySelector },
   data() {
     return {
       title: "YNAB"

@@ -16,39 +16,12 @@ function unsetAuthenticated() {
   _store.id = null;
 }
 
-// export default new class {
-//     constructor() {
-
-//     }
-
-//     get authenticated() {return _store.authenticated; }
-//     get id() { return _store.id; }
-
-//     login() {
-
-//     }
-
-//     logout() {
-
-//     }
-
-//     async init() {
-
-//     }
-// }();
-
 export default {
   get authenticated() {
     return _store.authenticated;
   },
   get id() {
     return _store.id;
-  },
-  login() {
-    window.location = "/login";
-  },
-  logout() {
-    window.location = "/logout";
   },
   async init() {
     if (_store.initialized) return;

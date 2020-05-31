@@ -2,6 +2,7 @@
   <div class="app-root">
     <Navbar />
     <Sidenav />
+    <div class="content"></div>
   </div>
 </template>
 
