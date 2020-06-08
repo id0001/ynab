@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,199 +25,179 @@ using Ynab.Services;
 
 namespace Ynab
 {
-    public class Startup
-    {
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
+	public class Startup
+	{
+		public Startup(IConfiguration configuration)
+		{
+			Configuration = configuration;
+		}
 
-        private IConfiguration Configuration { get; }
+		private IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
-        {
-            services.AddControllers();
+		public void ConfigureServices(IServiceCollection services)
+		{
+			services.AddControllers();
 
-            AddAuthentication(services);
-            services.AddAuthorization();
+			AddAuthentication(services);
+			services.AddAuthorization();
 
-            services.AddProxy();
+			services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
+			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
 
-            services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
+			services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
+			{
+				var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+				var token = await contextAccessor.HttpContext.GetTokenAsync("access_token");
 
-            services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
-            {
-                var contextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-                var token = await contextAccessor.HttpContext.GetTokenAsync("access_token");
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+				client.BaseAddress = new Uri(Configuration["ynab:apiendpoint"], UriKind.Absolute);
+			});
+		}
 
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                client.BaseAddress = new Uri(Configuration["ynab:apiendpoint"], UriKind.Absolute);
-            });
-        }
+		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+		{
+			app.UseXForwardedHeaders(new ForwardedHeadersOptions
+			{
+				ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+			});
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+			if (env.IsDevelopment())
+			{
+				app.UseDeveloperExceptionPage();
+			}
+			
+			app.UseStaticFiles();
+			app.UseSpaStaticFiles();
 
-            app.UseStaticFiles();
-            app.UseSpaStaticFiles();
+			app.UseRouting();
 
-            app.UseRouting();
+			app.UseAuthentication();
+			app.UseAuthorization();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+			app.UseEndpoints(options =>
+			{
+				options.MapControllers();
+			});
 
-            app.UseEndpoints(options =>
-            {
-                options.MapControllers();
-            });
+			app.UseSpa(spa =>
+			{
+				spa.Options.SourcePath = "ClientApp";
 
-            //app.Map("/ynab2", app1 =>
-            //{
-            //    app1.RunProxy(async context =>
-            //    {
-            //        var forwardContext = context.ForwardTo(Configuration["ynab:apiendpoint"]);
+				if (env.IsDevelopment())
+					spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
+			});
+		}
 
-            //        var token = await context.GetTokenAsync("access_token");
-            //        if (forwardContext.UpstreamRequest.Headers.Authorization == null && !string.IsNullOrEmpty(token))
-            //        {
-            //            forwardContext.UpstreamRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            //        }
+		private void AddAuthentication(IServiceCollection services)
+		{
+			services.AddAuthentication(options =>
+			{
+				options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+				options.DefaultChallengeScheme = YnabDefaults.AuthenticationScheme;
+			})
+			.AddCookie(options =>
+			{
+				options.Events.OnValidatePrincipal = OnValidatePrincipalAsync;
+			})
+			.AddYnab(options =>
+			{
+				options.ClientId = Configuration["ynab:clientid"];
+				options.ClientSecret = Configuration["ynab:clientsecret"];
+				options.Scope.Add("read-only");
+				options.SaveTokens = true;
 
-            //        var response = await forwardContext.Send();
+				options.Events.OnRedirectToAuthorizationEndpoint = OnRedirectToAuthorizationEndpointAsync;
+				options.Events.OnCreatingTicket = OnCreatingTicketAsync;
+			});
+		}
 
-            //        return response;
-            //    });
-            //});
+		private static async Task OnValidatePrincipalAsync(CookieValidatePrincipalContext context)
+		{
+			const string accessTokenName = "access_token";
+			const string refreshTokenName = "refresh_token";
+			const string expirationTokenName = "expires_at";
+			const string expiresInName = "expires_in";
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "ClientApp";
+			if (context.Principal.Identity.IsAuthenticated)
+			{
+				var expires = context.Properties.GetTokenValue(expirationTokenName);
+				if (expires != null && DateTime.Parse(expires, CultureInfo.InvariantCulture).ToUniversalTime() < DateTime.UtcNow)
+				{
+					var refreshToken = context.Properties.GetTokenValue(refreshTokenName);
+					if (refreshToken == null)
+					{
+						context.RejectPrincipal();
+						return;
+					}
 
-                if (env.IsDevelopment())
-                    spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");
-            });
-        }
+					var serviceProvider = context.HttpContext.RequestServices;
+					var ynabOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<YnabOptions>>().Get(YnabDefaults.AuthenticationScheme);
 
-        private void AddAuthentication(IServiceCollection services)
-        {
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = YnabDefaults.AuthenticationScheme;
-            })
-            .AddCookie(options =>
-            {
-                options.Events.OnValidatePrincipal = OnValidatePrincipalAsync;
-            })
-            .AddYnab(options =>
-            {
-                options.ClientId = Configuration["ynab:clientid"];
-                options.ClientSecret = Configuration["ynab:clientsecret"];
-                options.Scope.Add("read-only");
-                options.SaveTokens = true;
+					var pairs = new Dictionary<string, string>
+							{
+								{ "client_id", ynabOptions.ClientId },
+								{ "client_secret", ynabOptions.ClientSecret },
+								{ "grant_type", "refresh_token"},
+								{ "refresh_token", refreshToken }
+							};
 
-                options.Events.OnRedirectToAuthorizationEndpoint = OnRedirectToAuthorizationEndpointAsync;
-                options.Events.OnCreatingTicket = OnCreatingTicketAsync;
-            });
-        }
+					var content = new FormUrlEncodedContent(pairs);
+					var refreshResponse = await ynabOptions.Backchannel.PostAsync(ynabOptions.TokenEndpoint, content, context.HttpContext.RequestAborted);
+					refreshResponse.EnsureSuccessStatusCode();
 
-        private static async Task OnValidatePrincipalAsync(CookieValidatePrincipalContext context)
-        {
-            const string accessTokenName = "access_token";
-            const string refreshTokenName = "refresh_token";
-            const string expirationTokenName = "expires_at";
-            const string expiresInName = "expires_in";
+					using var payload = JsonDocument.Parse(await refreshResponse.Content.ReadAsStringAsync());
 
-            if (context.Principal.Identity.IsAuthenticated)
-            {
-                var expires = context.Properties.GetTokenValue(expirationTokenName);
-                if (expires != null && DateTime.Parse(expires, CultureInfo.InvariantCulture).ToUniversalTime() < DateTime.UtcNow)
-                {
-                    var refreshToken = context.Properties.GetTokenValue(refreshTokenName);
-                    if (refreshToken == null)
-                    {
-                        context.RejectPrincipal();
-                        return;
-                    }
+					var newAccessToken = payload.RootElement.GetProperty(accessTokenName).GetString();
+					var newRefreshToken = payload.RootElement.GetProperty(refreshTokenName).GetString();
+					var newExpirationToken = DateTime.UtcNow.AddSeconds(payload.RootElement.GetProperty(expiresInName).GetInt32()).ToString("o", CultureInfo.InvariantCulture);
 
-                    var serviceProvider = context.HttpContext.RequestServices;
-                    var ynabOptions = serviceProvider.GetRequiredService<IOptionsSnapshot<YnabOptions>>().Get(YnabDefaults.AuthenticationScheme);
+					context.Properties.StoreTokens(new[]
+					{
+								new AuthenticationToken{ Name = refreshTokenName, Value = newRefreshToken },
+								new AuthenticationToken{ Name = accessTokenName, Value = newAccessToken },
+								new AuthenticationToken{ Name = expirationTokenName, Value= newExpirationToken}
+							});
 
-                    var pairs = new Dictionary<string, string>
-                            {
-                                { "client_id", ynabOptions.ClientId },
-                                { "client_secret", ynabOptions.ClientSecret },
-                                { "grant_type", "refresh_token"},
-                                { "refresh_token", refreshToken }
-                            };
+					context.ShouldRenew = true;
+				}
+			}
+		}
 
-                    var content = new FormUrlEncodedContent(pairs);
-                    var refreshResponse = await ynabOptions.Backchannel.PostAsync(ynabOptions.TokenEndpoint, content, context.HttpContext.RequestAborted);
-                    refreshResponse.EnsureSuccessStatusCode();
+		private static Task OnRedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
+		{
+			bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
 
-                    using var payload = JsonDocument.Parse(await refreshResponse.Content.ReadAsStringAsync());
+			if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
+			{
+				context.Response.Headers["Location"] = context.RedirectUri;
+				context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+				return Task.CompletedTask;
+			}
 
-                    var newAccessToken = payload.RootElement.GetProperty(accessTokenName).GetString();
-                    var newRefreshToken = payload.RootElement.GetProperty(refreshTokenName).GetString();
-                    var newExpirationToken = DateTime.UtcNow.AddSeconds(payload.RootElement.GetProperty(expiresInName).GetInt32()).ToString("o", CultureInfo.InvariantCulture);
+			context.Response.Redirect(context.RedirectUri);
+			return Task.CompletedTask;
+		}
 
-                    context.Properties.StoreTokens(new[]
-                    {
-                                new AuthenticationToken{ Name = refreshTokenName, Value = newRefreshToken },
-                                new AuthenticationToken{ Name = accessTokenName, Value = newAccessToken },
-                                new AuthenticationToken{ Name = expirationTokenName, Value= newExpirationToken}
-                            });
+		private static async Task OnCreatingTicketAsync(OAuthCreatingTicketContext context)
+		{
+			var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-                    context.ShouldRenew = true;
-                }
-            }
-        }
+			var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
+			response.EnsureSuccessStatusCode();
 
-        private static Task OnRedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
-        {
-            bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
+			using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()))
+			{
+				var claims = new List<Claim>();
 
-            if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
-            {
-                context.Response.Headers["Location"] = context.RedirectUri;
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                return Task.CompletedTask;
-            }
+				if (payload.RootElement.TryGetProperty(new[] { "data", "user", "id" }, out var identifier))
+				{
+					claims.Add(new Claim(ClaimTypes.PrimarySid, identifier.GetString()));
+				}
 
-            context.Response.Redirect(context.RedirectUri);
-            return Task.CompletedTask;
-        }
-
-        private static async Task OnCreatingTicketAsync(OAuthCreatingTicketContext context)
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-
-            var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
-            response.EnsureSuccessStatusCode();
-
-            using (var payload = JsonDocument.Parse(await response.Content.ReadAsStringAsync()))
-            {
-                var claims = new List<Claim>();
-
-                if (payload.RootElement.TryGetProperty(new[] { "data", "user", "id" }, out var identifier))
-                {
-                    claims.Add(new Claim(ClaimTypes.PrimarySid, identifier.GetString()));
-                }
-
-                context.Identity.AddClaims(claims);
-            }
-        }
-
-        private static async Task RefreshTokenAsync()
-        {
-
-        }
-    }
+				context.Identity.AddClaims(claims);
+			}
+		}
+	}
 }
