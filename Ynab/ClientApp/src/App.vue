@@ -16,8 +16,13 @@ export default {
   name: "App",
   components: { Navbar, Sidenav },
   created() {
-    console.log(Auth);
-    Auth.init().catch(() => {});
+    Auth.init()
+      .then(() => {
+        if (!Auth.authenticated) {
+          Auth.login();
+        }
+      })
+      .catch(() => {});
   }
 };
 </script>

@@ -6,13 +6,13 @@
       </div>
     </li>
     <li>
-      <div class="divider"></div>
-    </li>
-    <li>
       <AuthButton />
     </li>
-    <li>
+    <li v-if="auth.authenticated">
       <BudgetSelector />
+    </li>
+    <li v-if="auth.authenticated">
+      <CategorySelector />
     </li>
     <li>
       <div class="divider"></div>
@@ -24,14 +24,16 @@
 </template>
 
 <script>
-import { AuthButton, BudgetSelector } from "@/components";
-import Auth from "@/services/auth.service";
+import { AuthButton, BudgetSelector, CategorySelector } from "@/components";
+import AuthService from "@/services/auth.service";
 
 export default {
   name: "Sidenav",
-  components: { AuthButton, BudgetSelector },
+  components: { AuthButton, BudgetSelector, CategorySelector },
   data() {
-    return {};
+    return {
+      auth: AuthService
+    };
   },
   mounted() {
     const els = document.querySelectorAll(".sidenav");
@@ -39,7 +41,7 @@ export default {
   },
   computed: {
     authStatus() {
-      if (Auth.authenticated) {
+      if (this.auth.authenticated) {
         return "Logged in!";
       }
 

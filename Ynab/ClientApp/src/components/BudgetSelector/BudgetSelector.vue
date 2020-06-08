@@ -1,5 +1,10 @@
 <template>
-  <a href="#!" ref="dropdown" class="app-budget-selector" :data-target="ids.budgetItems">
+  <a
+    href="#!"
+    ref="dropdown"
+    class="app-budget-selector btn-flat disabled"
+    :data-target="ids.budgetItems"
+  >
     {{ displayText }}
     <i v-if="dropdownOpen" class="material-icons right">arrow_drop_up</i>
     <i v-else class="material-icons right">arrow_drop_down</i>

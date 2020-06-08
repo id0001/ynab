@@ -6,11 +6,11 @@
         <i class="material-icons">menu</i>
       </a>
       <ul class="right hide-on-med-and-down">
-        <li>
+        <li v-if="auth.authenticated">
           <BudgetSelector />
         </li>
-        <li>&gt;</li>
-        <li>
+        <li v-if="auth.authenticated">&gt;</li>
+        <li v-if="auth.authenticated">
           <CategorySelector />
         </li>
         <li>
@@ -23,13 +23,15 @@
 
 <script>
 import { AuthButton, BudgetSelector, CategorySelector } from "@/components";
+import Auth from "@/services/auth.service";
 
 export default {
   name: "Navbar",
   components: { AuthButton, BudgetSelector, CategorySelector },
   data() {
     return {
-      title: "YNAB"
+      title: "YNAB",
+      auth: Auth
     };
   }
 };

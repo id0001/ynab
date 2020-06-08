@@ -57,8 +57,7 @@ export default {
   },
   methods: {
     initDropdown() {
-      const el = this.$refs.dropdown;
-      this.dropdown = M.Dropdown.init(el, {
+      this.dropdown = M.Dropdown.init(this.$refs.dropdown, {
         coverTrigger: false,
         closeOnClick: false,
         onOpenStart: () => {
@@ -76,7 +75,6 @@ export default {
       });
     },
     updateDropdown() {
-      //   var inst = M.Dropdown.getInstance(this.$refs.dropdown);
       if (this.dropdown.isOpen) {
         this.$nextTick(() => {
           this.dropdown.recalculateDimensions();
