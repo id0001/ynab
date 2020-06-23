@@ -5,12 +5,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using ProxyKit;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -27,6 +25,8 @@ namespace Ynab
 {
 	public class Startup
 	{
+		private const string SpaRoot = "app";
+
 		public Startup(IConfiguration configuration)
 		{
 			Configuration = configuration;
@@ -42,7 +42,7 @@ namespace Ynab
 			services.AddAuthorization();
 
 			services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = "ClientApp/build");
+			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = $"{SpaRoot}/build");
 
 			services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
 			{
@@ -56,7 +56,7 @@ namespace Ynab
 
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
 		{
-			app.UseXForwardedHeaders(new ForwardedHeadersOptions
+			app.UseForwardedHeaders(new ForwardedHeadersOptions
 			{
 				ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 			});
@@ -81,7 +81,7 @@ namespace Ynab
 
 			app.UseSpa(spa =>
 			{
-				spa.Options.SourcePath = "ClientApp";
+				spa.Options.SourcePath = SpaRoot;
 
 				if (env.IsDevelopment())
 					spa.UseProxyToSpaDevelopmentServer("http://localhost:8080");

@@ -1,0 +1,33 @@
+{
+	"name": "js-starterkit",
+	"version": "1.0.0",
+	"description": "https://app.pluralsight.com/library/courses/javascript-development-environment/table-of-contents",
+	"scripts": {
+		"build": "webpack --config webpack.config.js",
+		"serve": "webpack-dev-server"
+	},
+	"author": "Yorrick Spierings",
+	"license": "ISC",
+	"devDependencies": {
+		"@babel/core": "^7.10.2",
+		"@babel/preset-env": "^7.10.2",
+		"babel-loader": "^8.1.0",
+		"clean-webpack-plugin": "^3.0.0",
+		"core-js": "^3.6.5",
+		"css-loader": "^3.6.0",
+		"file-loader": "^6.0.0",
+		"html-webpack-plugin": "^4.3.0",
+		"node-sass": "^4.14.1",
+		"sass-loader": "^8.0.2",
+		"style-loader": "^1.2.1",
+		"vue-loader": "^15.9.2",
+		"vue-template-compiler": "^2.6.11",
+		"webpack": "^4.43.0",
+		"webpack-cli": "^3.3.12",
+		"webpack-dev-server": "^3.11.0"
+	},
+	"dependencies": {
+		"vue": "^2.6.11",
+		"vue-material": "^1.0.0-beta-14"
+	}
+}
