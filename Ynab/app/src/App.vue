@@ -1,5 +1,5 @@
 <template>
-  <md-app>
+  <md-app style="min-height: 100vh">
     <md-app-toolbar class="md-large md-primary">
       <div class="md-toolbar-row">
         <h3 class="md-title">YNAB</h3>
@@ -26,7 +26,9 @@
       </div>
     </md-app-toolbar>
 
-    <md-app-content></md-app-content>
+    <md-app-content>
+      <Graph />
+    </md-app-content>
   </md-app>
 </template>
 

@@ -1,13 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Ynab;
-using Ynab.Dto;
 using Ynab.Services;
 
 namespace OsrsWeb.Vue.Controllers
@@ -25,15 +20,27 @@ namespace OsrsWeb.Vue.Controllers
 		}
 
 		[Route("categories")]
-		public async Task<IActionResult> GetCategoriesAsync(string budgetId)
+		public async Task<IActionResult> GetCategoriesAsync(string budgetId, bool includeHidden = false, bool includeDeleted = false)
 		{
-			return CreateApiResponse(await _ynabService.GetCategoriesAsync(budgetId));
+			return CreateApiResponse(await _ynabService.GetCategoriesAsync(budgetId, includeHidden, includeDeleted));
 		}
 
 		[Route("budgets")]
 		public async Task<IActionResult> GetBudgetsAsync()
 		{
 			return CreateApiResponse(await _ynabService.GetBudgetsAsync());
+		}
+
+		[Route("month")]
+		public async Task<IActionResult> GetMonth(string budgetId, DateTime month)
+		{
+			return CreateApiResponse(await _ynabService.GetMonthAsync(budgetId, month));
+		}
+
+		[Route("transactions")]
+		public async Task<IActionResult> GetTransactions(string budgetId, string categoryId, DateTime month)
+		{
+			return CreateApiResponse(await _ynabService.GetTransactionsAsync(budgetId, categoryId, month));
 		}
 
 		private IActionResult CreateApiResponse<T>(YnabResponse<T> response)

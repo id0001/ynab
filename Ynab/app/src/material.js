@@ -7,7 +7,8 @@ import {
 	MdLayout,
 	MdMenu,
 	MdList,
-	MdSubheader
+	MdSubheader,
+	MdProgress
 } from 'vue-material/dist/components';
 
 const MaterialPlugin = {
@@ -21,6 +22,7 @@ const MaterialPlugin = {
 		Vue.use(MdMenu);
 		Vue.use(MdList);
 		Vue.use(MdSubheader);
+		Vue.use(MdProgress);
 	}
 };
 

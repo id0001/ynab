@@ -29,7 +29,7 @@ export default {
   methods: {
     onOpened() {
       if (this.budgets.length === 0) {
-        Api.budgets().then(budgets => {
+        Api.getBudgets().then(budgets => {
           Store.budgets = budgets;
         });
       }
@@ -37,7 +37,6 @@ export default {
     onSelected(item) {
       Store.clearCategories();
       Store.currentBudget = this.selectedBudget;
-      console.log(Store);
     }
   }
 };

@@ -1,5 +1,39 @@
 .app__graph {
-	margin: 0 16px;
-	height: 50%;
 	padding: 16px;
+	display: flex;
+	flex-direction: column;
+
+	.graph-container {
+		display: flex;
+		position: relative;
+
+		.graph {
+			flex-grow: 1;
+		}
+
+		.loading {
+			margin: 0 auto;
+			align-self: center;
+		}
+	}
+
+	.date-controls {
+		margin-bottom: 16px;
+		display: grid;
+		grid-template-columns: 1fr 100px 1fr;
+
+		> .prev {
+			justify-self: right;
+		}
+
+		> .center-text {
+			justify-self: center;
+			align-self: center;
+			text-align: center;
+		}
+
+		> .next {
+			justify-self: left;
+		}
+	}
 }
