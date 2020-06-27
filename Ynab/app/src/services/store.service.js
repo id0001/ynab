@@ -1,16 +1,21 @@
 import Vue from 'vue';
 
 const state = Vue.observable({
-	budgets         : [],
-	categories      : [],
-	currentBudget   : null,
-	currentCategory : null
+	budgets            : [],
+	categories         : [],
+	filteredCategories : [],
+	currentBudget      : null,
+	currentCategory    : null,
+	currentMonth       : null
 });
 
 const actions = {
 	clearCategories : () => {
 		state.currentCategory = null;
 		state.categories = [];
+	},
+	getCategory     : (id) => {
+		return state.categories.flatMap((e) => e.categories).find((e) => e.id === id);
 	}
 };
 
@@ -27,6 +32,12 @@ export default {
 	set categories(v) {
 		state.categories = v;
 	},
+	get filteredCategories() {
+		return state.filteredCategories;
+	},
+	set filteredCategories(v) {
+		state.filteredCategories = v;
+	},
 	get currentBudget() {
 		return state.currentBudget;
 	},
@@ -38,6 +49,12 @@ export default {
 	},
 	set currentCategory(v) {
 		state.currentCategory = v;
+	},
+	get currentMonth() {
+		return state.currentMonth;
+	},
+	set currentMonth(v) {
+		state.currentMonth = v;
 	},
 	...actions
 };

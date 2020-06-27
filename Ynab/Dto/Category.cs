@@ -12,5 +12,9 @@ namespace Ynab.Dto
 		public string Name { get; set; }
 
 		public bool Hidden { get; set; }
+
+		public bool Deleted { get; set; }
+
+		public int Budgeted { get; set; }
 	}
 }

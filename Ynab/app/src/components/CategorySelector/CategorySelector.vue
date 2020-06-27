@@ -3,7 +3,7 @@
     v-model="selectedCategory"
     name="category"
     id="category"
-    placeholder="Select budget..."
+    placeholder="Select category..."
     @md-selected="onSelected"
     @md-opened="onOpened"
     :disabled="selectedBudget === null"
@@ -28,14 +28,25 @@ export default {
   },
   computed: {
     selectedBudget: () => Store.currentBudget,
-    categories: () => Store.categories
+    categories: () => {
+      if (!Store.currentMonth) return Store.categories;
+
+      var filtered = filterCategories(
+        Store.categories,
+        Store.currentMonth.categories
+      );
+      if (!containsCategory(filtered, Store.currentCategory)) {
+        Store.currentCategory = null;
+      }
+
+      return filtered;
+    }
   },
   methods: {
     onOpened() {
       if (this.categories.length === 0) {
-        Api.categories(this.selectedBudget).then(categories => {
-          console.log(categories);
-          Store.categories = mapCategories(categories);
+        Api.getCategories(this.selectedBudget).then(categories => {
+          Store.categories = categories;
         });
       }
     },
@@ -45,22 +56,18 @@ export default {
   }
 };
 
-function mapCategories(groups) {
-  return groups
-    .filter(g => !g.hidden)
+function filterCategories(allCategories, currentCategories) {
+  return allCategories
+    .filter(g => currentCategories.hasOwnProperty(g.id))
     .map(g => {
-      return {
-        id: g.id,
-        name: g.name,
-        categories: g.categories
-          .filter(c => !c.hidden)
-          .map(c => {
-            return {
-              id: c.id,
-              name: c.name
-            };
-          })
-      };
+      g.categories = g.categories.filter(c =>
+        currentCategories[g.id].includes(c.id)
+      );
+      return g;
     });
+}
+
+function containsCategory(categories, id) {
+  return categories.flatMap(g => g.categories.map(c => c.id)).includes(id);
 }
 </script>
