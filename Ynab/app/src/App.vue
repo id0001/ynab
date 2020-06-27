@@ -4,7 +4,7 @@
       <div class="md-toolbar-row">
         <h3 class="md-title">YNAB</h3>
         <div class="md-toolbar-section-end">
-          <md-button>Login</md-button>
+          <md-button v-if="authenticated" @click="logout">Logout</md-button>
         </div>
       </div>
       <div class="md-toolbar-row center-content">
@@ -36,6 +36,7 @@
 import { Graph, BudgetSelector, CategorySelector } from "src/components";
 import Store from "src/services/store.service";
 import Api from "src/services/api.service";
+import Auth from "src/services/auth.service";
 
 export default {
   name: "App",
@@ -43,8 +44,19 @@ export default {
   data() {
     return {};
   },
-  mounted() {},
-  methods: {}
+  computed: {
+    authenticated: () => Auth.authenticated
+  },
+  mounted() {
+    Auth.init().then(() => {
+      if (!Auth.authenticated) {
+        Auth.login();
+      }
+    });
+  },
+  methods: {
+    logout: () => Auth.logout()
+  }
 };
 </script>
 

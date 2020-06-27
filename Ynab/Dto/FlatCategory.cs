@@ -10,7 +10,6 @@ namespace Ynab.Dto
 	{
 		public string Id { get; set; }
 
-		[JsonPropertyName("category_group_id")]
-		public string GroupId { get; set; }
+		public int Budgeted { get; set; }
 	}
 }

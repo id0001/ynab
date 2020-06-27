@@ -170,7 +170,11 @@ namespace Ynab.Services
 				.GroupBy(g => g.GetProperty("category_group_id").GetString())
 				.Where(g => g.Count(e => !e.GetProperty("hidden").GetBoolean() && !e.GetProperty("deleted").GetBoolean()) > 0)
 				.ToDictionary(kv => kv.Key, kv => kv.Where(e => !e.GetProperty("hidden").GetBoolean() && !e.GetProperty("deleted").GetBoolean())
-				.Select(e => e.GetProperty("id").GetString()).ToList())
+				.Select(e => new FlatCategory
+				{
+					Id = e.GetProperty("id").GetString(),
+					Budgeted = e.GetProperty("budgeted").GetInt32()
+				}).ToList())
 			};
 		}
 	}

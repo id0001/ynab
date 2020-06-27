@@ -29,24 +29,25 @@ export default {
   computed: {
     selectedBudget: () => Store.currentBudget,
     categories: () => {
-      if (!Store.currentMonth) return Store.categories;
+      if (!Store.currentMonth) return [];
 
-      var filtered = filterCategories(
-        Store.categories,
+      Store.monthCategories = buildMonthCategories(
+        Store.allCategories,
         Store.currentMonth.categories
       );
-      if (!containsCategory(filtered, Store.currentCategory)) {
+
+      if (!containsCategory(Store.monthCategories, Store.currentCategory)) {
         Store.currentCategory = null;
       }
 
-      return filtered;
+      return Store.monthCategories;
     }
   },
   methods: {
     onOpened() {
       if (this.categories.length === 0) {
         Api.getCategories(this.selectedBudget).then(categories => {
-          Store.categories = categories;
+          Store.allCategories = categories;
         });
       }
     },
@@ -56,13 +57,21 @@ export default {
   }
 };
 
-function filterCategories(allCategories, currentCategories) {
+function buildMonthCategories(allCategories, availableCategories) {
   return allCategories
-    .filter(g => currentCategories.hasOwnProperty(g.id))
+    .filter(g => availableCategories.hasOwnProperty(g.id))
     .map(g => {
-      g.categories = g.categories.filter(c =>
-        currentCategories[g.id].includes(c.id)
-      );
+      g.categories = g.categories
+        .filter(c => availableCategories[g.id].some(o => o.id === c.id))
+        .map(c => {
+          const oc = availableCategories[g.id].find(o => o.id === c.id);
+
+          return {
+            id: c.id,
+            name: c.name,
+            budgeted: oc.budgeted
+          };
+        });
       return g;
     });
 }

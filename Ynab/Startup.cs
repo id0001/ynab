@@ -64,8 +64,10 @@ namespace Ynab
 			if (env.IsDevelopment())
 			{
 				app.UseDeveloperExceptionPage();
+				app.UseHsts();
 			}
-			
+
+			app.UseHttpsRedirection();
 			app.UseStaticFiles();
 			app.UseSpaStaticFiles();
 
@@ -166,9 +168,7 @@ namespace Ynab
 
 		private static Task OnRedirectToAuthorizationEndpointAsync(RedirectContext<OAuthOptions> context)
 		{
-			bool isAjaxRequest = context.HttpContext.Request.Headers["X-Requested-With"] == "XMLHttpRequest";
-
-			if (isAjaxRequest || context.HttpContext.Request.Path.StartsWithSegments("/api"))
+			if(!context.HttpContext.Request.Path.StartsWithSegments("/login"))
 			{
 				context.Response.Headers["Location"] = context.RedirectUri;
 				context.Response.StatusCode = StatusCodes.Status401Unauthorized;

@@ -55,9 +55,7 @@ export default {
     selectedCategory() {
       return Store.currentCategory;
     },
-    selectedMonth() {
-      return Store.selectedMonth;
-    }
+    selectedMonth: () => Store.currentMonth
   },
   watch: {
     selectedBudget(newValue) {
@@ -66,7 +64,7 @@ export default {
     selectedCategory(newValue) {
       this.reloadGraph();
     },
-    currentDate(newValue) {
+    selectedMonth(newValue) {
       this.reloadGraph();
     }
   },
@@ -96,54 +94,82 @@ export default {
 
       var ctx = this.$refs.graph;
 
-      var chartData = tranformTransactionDataForChart(
+      var budgetData = tranformTransactionDataForChart(
         category.budgeted,
         transactions,
         this.currentDate
       );
 
-      console.log(chartData);
+      var targetData = getTargetDataForChart(
+        category.budgeted,
+        this.currentDate
+      );
 
       var chart = new Chart(ctx, {
         type: "line",
-        responsive: true,
         data: {
           datasets: [
             {
-              label: "Spending",
-              color: "#f00",
-              data: chartData
+              label: "Remaining budget",
+              backgroundColor: "#0000FF",
+              borderColor: "#0000FF",
+              fill: false,
+              data: budgetData,
+              lineTension: 0
+            },
+            {
+              label: "Target",
+              backgroundColor: "rgba(255,0,0,255)",
+              borderColor: "#FF0000",
+              fill: false,
+              data: targetData,
+              lineTension: 0
             }
           ]
         },
         options: {
+          responsive: true,
           title: {
-            text: "Chart.js Time Scale"
+            display: true,
+            text: "Spending burdown"
           },
           scales: {
-            x: {
-              type: "time",
-              time: {},
-              scaleLabel: {
+            xAxes: [
+              {
+                type: "time",
                 display: true,
-                labelString: "x"
+                scaleLabel: {
+                  display: true,
+                  labelString: "Date"
+                },
+                ticks: {
+                  major: {
+                    fontStyle: "bold",
+                    fontColor: "#FF0000"
+                  }
+                }
               }
-            },
-            y: {
-              scaleLabel: {
+            ],
+            yAxes: [
+              {
                 display: true,
-                labelString: "y"
+                scaleLabel: {
+                  display: true,
+                  labelString: "Budget"
+                }
               }
-            }
+            ]
           }
         }
       });
     },
     prevMonth() {
       this.currentDate = moment(this.currentDate).add(-1, "M");
+      this.loadMonth();
     },
     nextMonth() {
       this.currentDate = moment(this.currentDate).add(1, "M");
+      this.loadMonth();
     }
   }
 };
@@ -153,17 +179,50 @@ function tranformTransactionDataForChart(startAmount, transactions, month) {
   let data = Array(daysInMonth);
 
   var amount = startAmount;
-  for (var i = 1; i <= daysInMonth; i++) {
-    let date = moment(month).set("D", i);
+  for (var i = 0; i < daysInMonth; i++) {
+    let date = moment(month).set("D", i + 1);
     let points = transactions.filter(e => moment(e.date).isSame(date, "day"));
     amount += points.reduce((a, b) => (a += b.amount), 0);
     data[i] = {
-      x: date,
-      y: amount
+      x: date.endOf("day").toDate(),
+      y: round(amount / 1000, 2)
     };
   }
 
   return data;
+}
+
+function getTargetDataForChart(startAmount, month) {
+  let daysInMonth = moment(month).daysInMonth();
+  let data = Array(daysInMonth + 1);
+  var amount = startAmount;
+  var avg = startAmount / daysInMonth;
+
+  data[0] = {
+    x: moment(month)
+      .set("D", 1)
+      .startOf("day")
+      .toDate(),
+    y: round(amount / 1000, 2)
+  };
+
+  for (let i = 1; i < daysInMonth + 1; i++) {
+    amount -= avg;
+    data[i] = {
+      x: moment(month)
+        .set("D", i)
+        .endOf("day")
+        .toDate(),
+      y: round(amount / 1000, 2)
+    };
+  }
+
+  return data;
+}
+
+function round(number, decimals = 0) {
+  const n = Math.pow(10, decimals);
+  return Math.round((number + Number.EPSILON) * n) / n;
 }
 </script>
 

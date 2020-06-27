@@ -32,11 +32,9 @@ namespace Ynab.Controllers
 
         [Route("user")]
         [HttpGet]
+        [Authorize]
         public IActionResult GetUser()
         {
-            if (!User.Identity.IsAuthenticated)
-                return new EmptyResult();
-
             var claims = User.Claims;
 
             return Ok(new

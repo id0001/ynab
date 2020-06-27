@@ -17,6 +17,6 @@ namespace Ynab.Dto
 
 		public bool Deleted { get; set; }
 
-		public IDictionary<string, List<string>> Categories { get; set; }
+		public IDictionary<string, List<FlatCategory>> Categories { get; set; }
 	}
 }
