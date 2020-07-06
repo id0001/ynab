@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <SpaRoot>app\</SpaRoot>
     <DefaultItemExcludes>$(DefaultItemExcludes);$(SpaRoot)node_modules\**</DefaultItemExcludes>
+    <UserSecretsId>bd27a3f0-2bf0-409e-898b-6f315f3dc37d</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
