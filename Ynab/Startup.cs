@@ -42,7 +42,7 @@ namespace Ynab
 			services.AddAuthorization();
 
 			services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = $"{SpaRoot}/build");
+			services.AddSpaStaticFiles(configureOptions => configureOptions.RootPath = $"{SpaRoot}/dist");
 
 			services.AddHttpClient<IYnabService, YnabService>(async (sp, client) =>
 			{
