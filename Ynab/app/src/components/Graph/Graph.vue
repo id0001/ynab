@@ -131,7 +131,7 @@ export default {
           responsive: true,
           title: {
             display: true,
-            text: "Spending burdown"
+            text: "Spending burndown"
           },
           scales: {
             xAxes: [
@@ -176,15 +176,29 @@ export default {
 
 function tranformTransactionDataForChart(startAmount, transactions, month) {
   let daysInMonth = moment(month).daysInMonth();
-  let data = Array(daysInMonth);
+  let data = Array(daysInMonth + 1);
+
+  data[0] = {
+    x: moment(month)
+      .set("D", 0)
+      .startOf("day")
+      .toDate(),
+    y: round(startAmount / 1000, 2)
+  };
 
   var amount = startAmount;
-  for (var i = 0; i < daysInMonth; i++) {
-    let date = moment(month).set("D", i + 1);
+  for (var i = 1; i < daysInMonth + 1; i++) {
+    let date = moment(month)
+      .set("D", i)
+      .startOf("day")
+      .toDate();
+
     let points = transactions.filter(e => moment(e.date).isSame(date, "day"));
+
     amount += points.reduce((a, b) => (a += b.amount), 0);
+
     data[i] = {
-      x: date.endOf("day").toDate(),
+      x: date,
       y: round(amount / 1000, 2)
     };
   }
@@ -195,26 +209,20 @@ function tranformTransactionDataForChart(startAmount, transactions, month) {
 function getTargetDataForChart(startAmount, month) {
   let daysInMonth = moment(month).daysInMonth();
   let data = Array(daysInMonth + 1);
+
   var amount = startAmount;
-  var avg = startAmount / daysInMonth;
+  var spendPerDay = startAmount / daysInMonth;
 
-  data[0] = {
-    x: moment(month)
-      .set("D", 1)
-      .startOf("day")
-      .toDate(),
-    y: round(amount / 1000, 2)
-  };
-
-  for (let i = 1; i < daysInMonth + 1; i++) {
-    amount -= avg;
+  for (let i = 0; i < daysInMonth + 1; i++) {
     data[i] = {
       x: moment(month)
         .set("D", i)
-        .endOf("day")
+        .startOf("day")
         .toDate(),
       y: round(amount / 1000, 2)
     };
+
+    amount -= spendPerDay;
   }
 
   return data;
